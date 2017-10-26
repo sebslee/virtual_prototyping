@@ -1,0 +1,45 @@
+project (exercise2)
+
+add_executable (adc_simple_tb adc_simple_tb.cpp)
+add_executable (tlm_simple_test tlm_simple_test.cpp)
+add_executable (cyclic_pipe_tb cyclic_pipe_tb.cpp )
+add_executable (offset_gain_tb offset_gain_tb.cpp )
+add_executable (adc_system_test_no_tlm adc_system_test_no_tlm.cpp)
+add_executable (saw_tooth saw_tooth_tb.cpp)
+add_executable (adc_primary_tb adc_system_primary_tb.cpp)
+
+target_link_libraries( adc_primary_tb
+	         ${SYSTEMCAMS_LIBRARIES} 
+		                     ${SYSTEMC_LIBRARIES}
+				                         )
+
+target_link_libraries( adc_simple_tb
+	         ${SYSTEMCAMS_LIBRARIES} 
+		                     ${SYSTEMC_LIBRARIES}
+				                         )
+
+target_link_libraries( tlm_simple_test
+	         ${SYSTEMCAMS_LIBRARIES} 
+		                     ${SYSTEMC_LIBRARIES}
+				     )
+
+target_link_libraries( cyclic_pipe_tb
+	         ${SYSTEMCAMS_LIBRARIES} 
+		                     ${SYSTEMC_LIBRARIES}
+				     )
+
+				   
+target_link_libraries( offset_gain_tb
+	         ${SYSTEMCAMS_LIBRARIES} 
+		                     ${SYSTEMC_LIBRARIES}
+				     )
+				   
+ target_link_libraries (adc_system_test_no_tlm
+${SYSTEMCAMS_LIBRARIES} 
+${SYSTEMC_LIBRARIES})
+
+target_link_libraries( saw_tooth
+	         ${SYSTEMCAMS_LIBRARIES} 
+		                     ${SYSTEMC_LIBRARIES}
+				     )
+				                         

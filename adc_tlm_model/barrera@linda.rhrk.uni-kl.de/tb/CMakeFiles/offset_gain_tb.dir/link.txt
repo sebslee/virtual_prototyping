@@ -1,0 +1,1 @@
+/usr/bin/c++    -fpermissive -std=c++0x   CMakeFiles/offset_gain_tb.dir/offset_gain_tb.cpp.o  -o ../bin/offset_gain_tb -rdynamic /usr/local/systemc-ams-2.1/lib-linux64/libsystemc-ams.so /usr/local/systemc-2.3/lib-linux64/libsystemc.so -Wl,-rpath,/usr/local/systemc-ams-2.1/lib-linux64:/usr/local/systemc-2.3/lib-linux64 

@@ -1,0 +1,71 @@
+//Created by Sebastian Lee
+
+#include "../src/adc_simple.cpp"
+#include "../../exercise_2/src/wave_sine.cpp"
+#include "../src/wave_saw_tooth.cpp"
+
+class parallelizer :  sca_tdf::sca_module{
+  
+public:
+  
+  sca_tdf::sca_de::sca_in<bool> bit_in[12];
+  sca_tdf::sca_out<double> real_value;
+  sca_tdf::sca_de::sca_in<bool> data_valid;
+  //sca_tdf::sca_out<bool> start;
+  
+  parallelizer(sc_module_name name){}
+  void set_attributes(){
+    // bit_in[0].set_rate(12);
+    real_value.set_timestep(100 , SC_NS);
+    //bit_in[0].set_rate(12);
+    //or(
+  }
+  void processing(){
+      double to_int;
+      to_int =0;
+      for(int i = 0; i < 12 ; i++){
+	if(bit_in[i].read())
+	  to_int += pow(2, i);
+      }
+      to_int = (to_int * 3.3) / 4095;
+      if(data_valid.read())
+      real_value.write(to_int);
+  }
+};
+
+int sc_main (int argc , char *argv[]){
+
+  sc_set_time_resolution (10.0 , SC_NS);
+
+  sca_tdf::sca_signal<double> adc_in;
+  sca_tdf::sca_signal<double> adc_out;
+  //sca_tdf::sca_signal<double> ref;
+  sc_signal<bool> drdy_sig , start_sig;
+  sc_signal<bool> bit_output_sig[12];
+  wave_sine wave_sine_i ("wave_sine", 1000 , 1 , 0 , 1  , false , false , 1);
+  simple_adc simple_adc_i("adc" , 12 , 3.3);
+  parallelizer parallelizer_i("parallelizer");
+  //saw_tooth wave_sine_i("wave_saw" , 2.0 , 1000  , 0 , 0 ,1);
+  wave_sine_i.out(adc_in);
+  simple_adc_i.analog_in(adc_in);
+  //simple_adc_i.start();
+  simple_adc_i.drdy(drdy_sig);
+  for(int i = 0 ; i < 12 ; i++){
+  simple_adc_i.bit_output[i](bit_output_sig[i]);
+  parallelizer_i.bit_in[i](bit_output_sig[i]);
+  }
+  parallelizer_i.data_valid(drdy_sig);
+  parallelizer_i.real_value(adc_out);
+  sca_trace_file *wf = sca_create_vcd_trace_file("waves");
+   sca_trace( wf , adc_in , "adc_in");
+   sca_trace( wf , adc_out , "adc_out");   
+   //sca_trace( wf , bit_output_sig , "bits");  
+  sc_start(10 , SC_NS);
+  start_sig.write(true);
+  sc_start(10, SC_MS);
+  //delete bit_output_sig;
+  sc_stop();
+  return 0;
+}
+  
+  

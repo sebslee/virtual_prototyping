@@ -1,0 +1,46 @@
+[*]
+[*] GTKWave Analyzer v3.3.66 (w)1999-2015 BSI
+[*] Tue Sep 26 23:19:52 2017
+[*]
+[dumpfile] "/home/sleebarr/EMECS_TUK/VP/vp_tasks/exercise_3/waves.vcd"
+[dumpfile_mtime] "Tue Sep 26 21:42:50 2017"
+[dumpfile_size] 68948850
+[savefile] "/home/sleebarr/EMECS_TUK/VP/vp_tasks/exercise_3/adc_sys.gtkw"
+[timestart] 5220000
+[size] 1301 744
+[pos] -1 -1
+*-22.000000 10000100 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[sst_width] 225
+[signals_width] 86
+[sst_expanded] 1
+[sst_vpaned_height] 201
+@10028
+SystemC_AMS.adc_ch3
+@20000
+-
+-
+@10028
+SystemC_AMS.adc_ch5
+@20000
+-
+-
+@10028
+SystemC_AMS.adc_ch7
+@20000
+-
+-
+@28
+SystemC_AMS.adc_clk
+@10029
+SystemC_AMS.adc_out
+@20000
+-
+-
+@28
+SystemC_AMS.ch3_en
+SystemC_AMS.ch5_en
+SystemC_AMS.ch7_en
+@22
+SystemC_AMS.ch_sel
+[pattern_trace] 1
+[pattern_trace] 0

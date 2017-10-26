@@ -1,0 +1,7 @@
+#include "../src/pv_interface.h"
+
+int main (int argc, char* argv[]) {
+  pv_interface pv_interface_i("pv_interface");
+  return 0;
+
+}

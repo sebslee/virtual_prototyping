@@ -1,0 +1,21 @@
+//Created by Sebastian Lee
+
+
+#ifndef WAVE_SAW
+#define WAVE_SAW
+
+#include "system-ams.h"
+#include "math.h"
+
+#define PI 3.14159265
+
+class saw_tooth : public sca_tdf::sca_module{
+ public:
+  saw_tooth(sc_core::sc_module_name name , double _amplitude , double _period){
+    amplitude = _amplitude;
+    period = _period;
+  }
+ private:
+  double amplitude;
+  double period;
+};

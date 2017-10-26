@@ -1,0 +1,33 @@
+//////////////////////////////////////////////////////////////////////////////////
+//
+// Created by Sebastian Lee on 12.09.17
+// Description:
+// Programmable Gain Amplifier implementation.
+// Gain controlled via register on TLM interface.
+//
+//////////////////////////////////////////////////////////////////////////////////
+
+
+#ifndef PGA_H
+#define PGA_H
+
+#include <systemc-ams.h>
+#include "defines.h"
+
+class pga : sca_tdf::sca_module{
+
+ public:
+  sca_tdf::sca_in<double>  input;
+  sca_tdf::sca_in<double>  gain;
+  sca_tdf::sca_in<bool>    valid_in;
+  sca_tdf::sca_out<bool>   valid_out;
+  sca_tdf::sca_out<double> output;
+  
+  pga(sc_module_name name){}
+ private:
+  double result;
+  void set_attributes();
+  void processing();    
+};
+
+#endif

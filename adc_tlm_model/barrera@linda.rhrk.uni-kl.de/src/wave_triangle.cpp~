@@ -1,0 +1,76 @@
+////////////////////////////////////////////////////////////////////////////////
+/// @file   wave_triangle.cpp
+/// @brief Implementation of SystemC-AMS module Triangle Wave Generator
+///
+/// Copyright 2012-2017 AG Design of Cyber Physical Systems, TU Kaiserslautern.
+///
+/// @author Xiao Pan <pan@cs.uni-kl.de>,
+///         Carna Radojijic <radojicic@cs.uni-kl.de>,
+///         AG Design of Cyber-Physical Systems
+///
+/// @date   2017-06-01
+///
+/// @version 0.1.0
+///
+/// @section LICENSE License
+///
+///-----------------------------------------------------------------------------
+/// (This code is commented throughout for use with Doxygen.)
+///-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+
+
+#include "../include/generators/wave_triangle.h"
+
+using namespace sca_comlib;
+
+// -----------------------------------------------------------------------------
+//! Custom constructor for the wave_triangle module
+
+//! The constructor takes the value of frequency, amplitute and offset of the
+//! expected output signal. Besides, user can set the data rate of output port
+//! with "d_rate".
+
+//! @param nm       The SystemC module name
+//! @param _freq    Frequency of the generated wave
+//! @param _amp     Amplitude of the generated wave
+//! @param _ofset   output offset
+//! @param datarate output data rate
+// -----------------------------------------------------------------------------
+wave_triangle::wave_triangle(sc_core::sc_module_name nm,
+                             double _freq,
+                             double _amp,
+                             double _ofset,
+                             int    _rate)
+{
+    freq    = _freq;
+    ofset   = _ofset;
+    amp     = _amp;
+    rate    = _rate;
+}
+
+
+
+void wave_triangle::set_attributes()
+{
+    // set the data rate of the output port
+    out.set_rate(rate);
+}
+
+void wave_triangle::initialize()
+{
+    //compute stepsize of output signal according to the time step of output port
+    stepsize = out.get_timestep().to_seconds()*2.0*M_PI*freq;
+}
+
+void wave_triangle:: processing()
+{
+    // write <rate> data token for one bit
+    for(int i=0; i<rate; i++)
+    {
+        out.write(ofset+2*amp/M_PI*asin(sin(actval)),i);
+        actval+=stepsize;
+    }
+}
+
+

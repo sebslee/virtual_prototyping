@@ -1,0 +1,13 @@
+//Created by Sebastian Lee
+
+#include "../wave_saw_tooth.h"
+
+void saw_tooth::set_attributes(){
+  out.set_rate(rate);
+}
+
+void saw_tooth::processing(){
+  double res;
+  res = - ( 2 * amplitude) * atan( 1/tan(get_timestep() * PI / period)));
+  out.write(res);
+}

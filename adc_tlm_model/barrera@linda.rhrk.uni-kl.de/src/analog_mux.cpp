@@ -1,0 +1,92 @@
+//////////////////////////////////////////////////////////////////////////////////
+//
+// Created by Sebastian Lee on 12.09.17
+// Description:
+// Analog MUX.
+// Front end module, takes three analog inputs (only three channels supported on
+// this project) and muxes it depending on which channel is enabled. Also detects
+// a channel enable change and if that happens must disable input for settling time
+// This module is connected to S/H module. 
+//
+//////////////////////////////////////////////////////////////////////////////////
+
+
+#include "../include/analog_mux.h"
+
+void analog_mux::processing(){
+  //small FSM modelling makes things easier.. for a HW developer
+  // if(swrst.read())
+  // state = IDLE;
+  
+  //state_t n_state;
+  double sample_signal;
+  if(start.read()){
+    prev_ch = ch_sel.read();
+    valid.write(false); //default make it true on active.. this halts execution..
+  switch(state){    
+  case IDLE:
+    //cout << "State IDLE" << endl;
+      if (prev_ch != ch_sel){
+	state = WAITING;
+	counter = 0;
+      }
+      else
+	state = ACTIVE;          
+      break;    
+    
+  case  WAITING:
+    //cout << "State waiting " <<  counter << endl ;
+    if(counter < settling_time.read()){
+      valid.write(false); //output not valid
+      counter++;
+      state = WAITING;
+    }
+    else{
+      counter = 0;
+      state = ACTIVE;
+    }
+    break;
+    
+  case ACTIVE:
+    //ch_sel = ch_sel.read(); 
+    //    cout << "State ACTIVE " <<  ch_sel.read() << endl;
+    // if (start.read()){
+    if(prev_ch != ch_sel.read()){ //channel change go and wait..
+      //cout << "WRONG" << endl;
+      state = WAITING;
+      counter =0;      
+      }
+    else {      
+      state = ACTIVE;
+      if(ch_sel.read() == 3){
+	//scout << sample_signal << " analog" << endl;
+	sample_signal = analog_in_3.read();
+	analog_out.write(sample_signal);
+      }
+      else if(ch_sel.read() == 5){
+	sample_signal = analog_in_5.read();
+	analog_out.write(sample_signal);
+      }
+      else if(ch_sel.read() == 7){
+	sample_signal = analog_in_7.read();
+	analog_out.write(sample_signal);
+      }
+      //else{
+      //SC_REPORT_ERROR("Analog MUX:", "Invalid Channel selected");}
+    }
+      valid.write(true); // sample valid for S/H
+      // }
+      //  }//  process only when start is active...
+    //else
+    //  state = IDLE;
+    break;
+    
+    default:
+      	SC_REPORT_ERROR("Analog MUX:", "Invalid state ...");
+	break;
+  }
+
+  }
+}
+
+

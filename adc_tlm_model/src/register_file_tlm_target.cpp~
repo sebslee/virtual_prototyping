@@ -1,0 +1,143 @@
+//////////////////////////////////////////////////////////////////////////////////
+//
+// Created by Sebastian Lee on 12.09.17
+// Description:
+// This file models the TLM-Target for the Programmers view. 
+// Implementation:  Only 32 bit read/writes implemented ...
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+#include "../include/register_file_tlm_target.h"
+
+void reg_file_target::b_transport( tlm::tlm_generic_payload& trans , sc_time& delay){
+  
+  //Get transaction info
+  tlm::tlm_command cmd = trans.get_command();
+  sc_dt::uint64 adr = trans.get_address();
+  unsigned char* ptr= trans.get_data_ptr();
+  unsigned int len = trans.get_data_length();
+  unsigned char* byt = trans.get_byte_enable_ptr();
+  unsigned int wid = trans.get_streaming_width();
+
+
+  sc_dt::uint64 effective_addr;  
+  effective_addr = adr - sc_dt::uint64(ADC_BADR);
+  // Only 32 bit read/write supported ....
+        if(adr < ADC_BADR ||  adr > ADC_BADR + MAX_OFFSET || len != 4 || byt != 0  )
+      SC_REPORT_ERROR("TLM-2", "Target does not support given generic payload transaction");
+	
+  if(cmd == tlm::TLM_WRITE_COMMAND){
+      memcpy(&reg_array[effective_addr] , ptr , len);      
+    }
+  
+  else if (cmd == tlm::TLM_READ_COMMAND){
+    memcpy(ptr , &reg_array[effective_addr] , len)  ;
+  }
+  //wait(delay); //simulate delay of 1 clk cycle..
+  trans.set_response_status( tlm::TLM_OK_RESPONSE );
+    
+}
+
+void reg_file_target::update_regs(){
+    unsigned int transfer_tmp;
+    //    unsigned char reg_tmp[4]; //full register 32 bit access //
+    while(true){
+      wait();
+      unsigned int reg_tmp;
+      //Control register
+      memcpy( reinterpret_cast<unsigned char*>(&reg_tmp)  ,&reg_array[ADC_CR - ADC_BADR]  , 4);
+      swrst.write (reg_tmp & 0x00000001);
+      start.write(reg_tmp  & 0x00000002);
+      //Decode Mode register data
+      //read mode register
+      memcpy( reinterpret_cast<unsigned char*>(&reg_tmp)  ,&reg_array[ADC_MR - ADC_BADR]  , 4);
+      // Low res bit 4 mask
+      lowres.write(reg_tmp & 0x00000010);
+      //Prescaler not used (fixed ADC frequency , we can though change this via timestep and make it dependent on sys clk... nice to have
+      //Settling time bit 21 and 20 byte 3 bit 4 & 5
+      settling[0].write(reg_tmp & 0x00100000);
+      settling[1].write(reg_tmp & 0x00200000);
+      //Track time bit 3 to 0 of byte 4
+      tracking_time[0].write( reg_tmp & 0x01000000);	      
+      tracking_time[1].write( reg_tmp & 0x02000000);
+      tracking_time[2].write( reg_tmp & 0x04000000);
+      tracking_time[3].write( reg_tmp & 0x08000000);      
+      //Transfer timer bit 29 & 28 (4 & 5 byte 4)
+      transfer[0].write(reg_tmp & 0x10000000);
+      transfer[1].write(reg_tmp & 0x20000000);
+      //CHER register decode
+      memcpy( reinterpret_cast<unsigned char*>(&reg_tmp)  ,&reg_array[ADC_CHER - ADC_BADR]  , 4);
+      //channel enables
+      ch_3_en.write(reg_tmp & 0x00000008);
+      ch_5_en.write(reg_tmp & 0x00000020);
+      ch_7_en.write(reg_tmp & 0x00000080);
+
+      //CHDR
+      memcpy( reinterpret_cast<unsigned char*>(&reg_tmp)  ,&reg_array[ADC_CHDR - ADC_BADR]  , 4);
+      ch_3_dis.write(reg_tmp & 0x00000008);
+      ch_5_dis.write(reg_tmp & 0x00000020);
+      ch_7_dis.write(reg_tmp & 0x00000080);
+
+      //Channel gain
+      memcpy( reinterpret_cast<unsigned char*>(&reg_tmp)  ,&reg_array[ADC_CGR - ADC_BADR]  , 4);
+      gain[0].write(reg_tmp & 0x00000001);
+      gain[1].write(reg_tmp & 0x00000002);
+      //Offset
+      memcpy( reinterpret_cast<unsigned char*>(&reg_tmp)  ,&reg_array[ADC_COR - ADC_BADR]  , 4);
+      offset[0].write(reg_tmp & 0x00000001);
+      offset[1].write(reg_tmp & 0x00000002);
+
+
+      //Update R/O Registers
+
+      unsigned int data_tmp;
+      data_tmp = 0;
+      //Data registers
+      for(int i =0 ; i < 12; i++)
+	if(data_ch3[i].read())
+	  data_tmp+= pow(2 , i);
+      memcpy(&reg_array[ADC_CDR3 - ADC_BADR] , reinterpret_cast<unsigned char*>(&data_tmp),4);
+      data_tmp = 0;
+      //Data registers
+      for(int i =0 ; i < 12; i++)
+	if(data_ch5[i].read())
+	  data_tmp+= pow(2 , i);
+      memcpy(&reg_array[ADC_CDR5 - ADC_BADR] , reinterpret_cast<unsigned char*>(&data_tmp),4);
+      data_tmp = 0;
+      //Data registers
+      for(int i =0 ; i < 12; i++)
+	if(data_ch7[i].read())
+	  data_tmp+= pow(2 , i);
+      memcpy(&reg_array[ADC_CDR7 - ADC_BADR] , reinterpret_cast<unsigned char*>(&data_tmp),4);
+
+      
+      if(!ch3_en.read() && !ch5_en.read() && !ch7_en.read())
+	data_tmp = 0x00000000;
+      else if(!ch3_en.read() && !ch5_en.read() && ch7_en.read())
+	data_tmp = 0x00000080;	
+      else if(!ch3_en.read() && ch5_en.read() && !ch7_en.read())
+	data_tmp = 0x00000020;
+      else if(!ch3_en.read() && ch5_en.read() && ch7_en.read())
+	data_tmp = 0x000000A0;
+      else if(ch3_en.read() && !ch5_en.read() && !ch7_en.read())
+	data_tmp = 0x00000008;
+      else if(ch3_en.read() && !ch5_en.read() && ch7_en.read())
+	data_tmp = 0x00000088;
+      else if(ch3_en.read() && ch5_en.read() && ch7_en.read())
+	data_tmp = 0x000000A8;
+      memcpy(&reg_array[ADC_CHSR - ADC_BADR] , reinterpret_cast<unsigned char*>(&data_tmp),4);
+      #ifdef DEBUG
+      //memcpy( reinterpret_cast<unsigned char*>(&reg_tmp)  ,&reg_array[ADC_MR - ADC_BADR]  ,4);
+      //cout << "@  " << sc_time_stamp() << " Reg file  settling time [0] " << settling[0].read() << endl;
+      //cout << "@  " << sc_time_stamp() << " Reg file  settling time [1] " << settling[1].read() << endl;
+      //cout << "@  " << sc_time_stamp() << " Reg file  lowres  " << lowres.read() << endl;
+      //cout << "@  " << sc_time_stamp() << " Reg file  tracking [0] " << tracking_time[0].read() << endl;
+      //cout << "@  " << sc_time_stamp() << " Reg file  tracking [1] " << tracking_time[1].read() << endl;
+      //cout << "@  " << sc_time_stamp() << " Reg file  tracking [2] " << tracking_time[2].read() << endl;
+      //cout << "@  " << sc_time_stamp() << " Reg file  tracking [3] " << tracking_time[3].read() << endl;
+      //cout << "@  " << sc_time_stamp() << " Reg file  transfer [0] " << transfer[0].read() << endl;
+      //cout << "@  " << sc_time_stamp() << " Reg file  transfer [1] " << transfer[1].read() << endl;            
+      #endif
+    }  
+ }
+

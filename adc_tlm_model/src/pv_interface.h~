@@ -1,0 +1,29 @@
+//Created by Sebastian Lee
+// Programmers view interface, contains ADC system wrapper instance
+// plus three PV functions available to use in FW development:
+
+#include <systemc.h>
+#include <systemc-ams.h>
+#include "../src/adc_system.cpp"
+#include "../src/wave_sine.cpp"
+#include "../src/wave_saw.cpp"
+
+class pv_interface : public sc_core::sc_module {
+
+ public:
+  sca_tdf::sca_signal<double> sine;
+  sca_tdf::sca_signal<double> cosine;
+  sca_tdf::sca_signal<double> saw;
+  
+  sc_clock sys_clk("sys_clk" , 10 ,SC_NS ,  0.5 , 10 , SC_NS);
+
+  wave_sine *wave_sine_i;
+  wave_sine *wave_cosine_i;
+  wave_saw  *wave_saw_i;
+
+  
+  
+  
+  
+
+}
